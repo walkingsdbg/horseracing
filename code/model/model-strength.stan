@@ -1,18 +1,9 @@
 data {
   int N;      // num of horses
+  int M;      // num of jockeys
   int G[18];  // num of races
-  int<lower=1, upper=N> LW7[G[7],7];  // order of arrival of each race (7th:LW7[,1],6th:LW[,2],...1st:LW7[,7])
-  int<lower=1, upper=N> LW8[G[8],8];  
-  int<lower=1, upper=N> LW9[G[9],9];  
-  int<lower=1, upper=N> LW10[G[10],10];  
-  int<lower=1, upper=N> LW11[G[11],11];  
-  int<lower=1, upper=N> LW12[G[12],12];  
-  int<lower=1, upper=N> LW13[G[13],13];  
-  int<lower=1, upper=N> LW14[G[14],14];  
-  int<lower=1, upper=N> LW15[G[15],15];  
-  int<lower=1, upper=N> LW16[G[16],16];  
-  int<lower=1, upper=N> LW17[G[17],17];  
-  int<lower=1, upper=N> LW18[G[18],18];  
+  int HorseID[sum(G),18,18];
+  int JockeyID[sum(G),18,18];
 }
 
 parameters {
@@ -29,9 +20,12 @@ parameters {
   ordered[17] performance17[G[17]];
   ordered[18] performance18[G[18]];
   
-  vector[N] mu;
-  real<lower=0> s_mu;
-  vector<lower=0>[N] s_pf;
+  vector[N] mu_h;
+  vector[M] mu_j;
+  real<lower=0> s_mu_h;
+  real<lower=0> s_mu_j;
+  vector<lower=0>[N] s_pf_h;
+  vector<lower=0>[M] s_pf_j;
 }
 
 model {
@@ -39,34 +33,36 @@ model {
     for (g in 1:G[r]){
       for (i in 1:r){
         if (r==7)
-          performance7[g,i] ~ normal(mu[LW7[g,i]], s_pf[LW7[g,i]]);
+          performance7[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==8)
-          performance8[g,i] ~ normal(mu[LW8[g,i]], s_pf[LW8[g,i]]);
+          performance8[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==9)
-          performance9[g,i] ~ normal(mu[LW9[g,i]], s_pf[LW9[g,i]]);
+          performance9[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==10)
-          performance10[g,i] ~ normal(mu[LW10[g,i]], s_pf[LW10[g,i]]);
+          performance10[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==11)
-          performance11[g,i] ~ normal(mu[LW11[g,i]], s_pf[LW11[g,i]]);
+          performance11[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==12)
-          performance12[g,i] ~ normal(mu[LW12[g,i]], s_pf[LW12[g,i]]);
+          performance12[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==13)
-          performance13[g,i] ~ normal(mu[LW13[g,i]], s_pf[LW13[g,i]]);
+          performance13[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==14)
-          performance14[g,i] ~ normal(mu[LW14[g,i]], s_pf[LW14[g,i]]);
+          performance14[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==15)
-          performance15[g,i] ~ normal(mu[LW15[g,i]], s_pf[LW15[g,i]]);
+          performance15[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==16)
-          performance16[g,i] ~ normal(mu[LW16[g,i]], s_pf[LW16[g,i]]);
+          performance16[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==17)
-          performance17[g,i] ~ normal(mu[LW17[g,i]], s_pf[LW17[g,i]]);
+          performance17[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
         else if (r==18)
-          performance18[g,i] ~ normal(mu[LW18[g,i]], s_pf[LW18[g,i]]);
+          performance18[g,i] ~ normal(mu_h[HorseID[g,i,r]]+mu_j[JockeyID[g,i,r]], sqrt( s_pf_h[HorseID[g,i,r]]^2 + s_pf_j[JockeyID[g,i,r]]^2 ) );
       }
     }
   }
 
-  mu ~ normal(0, s_mu);
-  s_pf ~ gamma(10, 10);
+  mu_h ~ normal(0, s_mu_h);
+  mu_j ~ normal(0, s_mu_j);
+  s_pf_h ~ gamma(10, 10);
+  s_pf_j ~ gamma(10, 10);
 }
 
