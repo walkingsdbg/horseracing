@@ -7,21 +7,27 @@ EmptyNode <- function(){
   return(Node)
 }
 
+EmptyItem <- function(){
+  Node <- data.frame(matrix(rep(NA, 2), nrow=1))[numeric(0), ]
+  colnames(Node) <- c("weight", "value")
+  return(Node)
+}
+
 UpperBound <- function(x,W,Items){
   n <- nrow(Items)
   #calculate the upper bound by solving lp relaxation problem
-  if(x$weight > W){
+  if(x$node$weight > W){
     ubound <- 0
   }else{
-    if(x$level == n){
-      ubound <- x$profit
+    if(x$node$level == n){
+      ubound <- x$node$profit
     }else{
-      f.obj  <- Items$value[(x$level+1):n]
-      f.con  <- matrix(Items$weight[(x$level+1):n], nrow=1, byrow=TRUE)
+      f.obj  <- Items$value[(x$node$level+1):n]
+      f.con  <- matrix(Items$weight[(x$node$level+1):n], nrow=1, byrow=TRUE)
       f.dir  <- "<="
-      f.rhs  <- W-x$weight
+      f.rhs  <- W-x$node$weight
       lpslt  <- lp("max", f.obj, f.con, f.dir, f.rhs) 
-      ubound <- lpslt$objval + x$profit
+      ubound <- lpslt$objval + x$node$profit
     }
   }
 
@@ -30,57 +36,67 @@ UpperBound <- function(x,W,Items){
 
 Items <- data.frame(weight=c(2,3.14,1.98,5,3), value=c(40,50,100,95,30))
 Items <- Items[order(Items$value/Items$weight,decreasing = T),] #order the items according to value per weight
-W <- 10
-Q <- EmptyNode() #stack
-u <- data.frame(level=0, profit=0,  weight=0,  ubound=NA)  #node
-v <- data.frame(level=NA, profit=NA, weight=NA, ubound=NA) #branch of the node u
-w <- data.frame(level=NA, profit=NA, weight=NA, ubound=NA) #branch of the node u
+W <- 10 #total weight
+Q <- as.list(NULL) #stack
+u <- list(data.frame(level=0, profit=0, weight=0, ubound=NA),EmptyItem()) #node
+names(u) <- c("node","item")
+v <- list(data.frame(level=NA,profit=NA,weight=NA,ubound=NA),EmptyItem()) #branch of the node u
+names(v) <- c("node","item")
+w <- list(data.frame(level=NA,profit=NA,weight=NA,ubound=NA),EmptyItem()) #branch of the node u
+names(w) <- c("node","item")
 
-Q <- rbind(Q,u) #push
+#push
+Q <- append(Q,list(u))
+
 MaxProfit <- 0
-n <- nrow(Items)
-iter <- 0
+OptItem   <- EmptyItem()
+n         <- nrow(Items)
+iter      <- 0
 
-while(nrow(Q) > 0){
+while(length(Q) > 0){
   iter <- iter + 1
   
   #pop
-  u <- Q[nrow(Q),]
-  Q <- Q[-nrow(Q),]
-  print(u)
+  u <- Q[[length(Q)]]
+  Q[[length(Q)]] <- NULL
   
-  if(u$level == 0){
-    v$level <- 0
-    w$level <- 0
+  print(u$item)
+  
+  if(u$node$level == 0){
+    v$node$level <- 0
+    w$node$level <- 0
   }
   
-  if(u$level == n){
+  if(u$node$level == n){
     next
   }else{#depth-first search
     
+    ##branching
     #not taking the item
-    v$level  <- u$level + 1
-    v$weight <- u$weight
-    v$profit <- u$profit
-
+    v$node$level  <- u$node$level + 1
+    v$item        <- u$item
+    v$node$weight <- u$node$weight
+    v$node$profit <- u$node$profit
     #taking the item
-    w$level  <- u$level + 1
-    w$weight <- u$weight + Items$weight[w$level]
-    w$profit <- u$profit + Items$value[w$level]
+    w$node$level  <- u$node$level + 1
+    w$item        <- rbind(u$item,Items[w$node$level,])
+    w$node$weight <- u$node$weight + Items$weight[w$node$level]
+    w$node$profit <- u$node$profit + Items$value[w$node$level]
 
-    #bounding
-    v$ubound <- UpperBound(v,W,Items)
-    w$ubound <- UpperBound(w,W,Items)
-    if(w$weight <= W && w$profit > MaxProfit){
-      MaxProfit <- w$profit
+    ##bounding
+    v$node$ubound <- UpperBound(v,W,Items)
+    w$node$ubound <- UpperBound(w,W,Items)
+    if(w$node$weight <= W && w$node$profit > MaxProfit){
+      MaxProfit <- w$node$profit
+      OptItem   <- w$item
     }
     
-    #pruning
-    if(v$ubound > MaxProfit){
-      Q <- rbind(Q,v)#push
+    ##pruning
+    if(v$node$ubound > MaxProfit){
+      Q <- append(Q,list(v)) #push
     }
-    if(w$ubound > MaxProfit){
-      Q <- rbind(Q,w)#push
+    if(w$node$ubound > MaxProfit){
+      Q <- append(Q,list(w)) #push
     }
     
   }
