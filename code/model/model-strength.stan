@@ -4,6 +4,9 @@ data {
   int G[18];  // num of races
   int HorseID[sum(G),18,18];
   int JockeyID[sum(G),18,18];
+  int N_new;  // num of horses(jockeys) for prediction
+  int HorseID_new[N_new];
+  int JockeyID_new[N_new];
 }
 
 parameters {
@@ -66,3 +69,9 @@ model {
   s_pf_j ~ gamma(10, 10);
 }
 
+generated quantities{
+  real pf[N_new];
+  for (n in 1:N_new){
+    pf[n] = normal_rng( mu_h[HorseID_new[n]]+mu_j[JockeyID_new[n]], sqrt(s_pf_h[HorseID_new[n]]^2 + s_pf_j[JockeyID_new[n]]^2) );
+  }
+}
