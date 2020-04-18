@@ -7,6 +7,8 @@ data {
   int N_new;  // num of horses(jockeys) for prediction
   int HorseID_new[N_new];
   int JockeyID_new[N_new];
+  int Null_HorseID[N_new];
+  int Null_JockeyID[N_new];
 }
 
 parameters {
@@ -71,7 +73,28 @@ model {
 
 generated quantities{
   real pf[N_new];
+  real mu_h_null;
+  real mu_j_null;
+  real<lower=0> s_pf_h_null;
+  real<lower=0> s_pf_j_null;
+  
+  mu_h_null   = normal_rng(0,s_mu_h);
+  mu_j_null   = normal_rng(0,s_mu_j);
+  s_pf_h_null = gamma_rng(10,10);
+  s_pf_j_null = gamma_rng(10,10);
+  
   for (n in 1:N_new){
-    pf[n] = normal_rng( mu_h[HorseID_new[n]]+mu_j[JockeyID_new[n]], sqrt(s_pf_h[HorseID_new[n]]^2 + s_pf_j[JockeyID_new[n]]^2) );
+    if (Null_HorseID[n] == 0 && Null_JockeyID[n] == 0){
+      pf[n] = normal_rng( mu_h[HorseID_new[n]] + mu_j[JockeyID_new[n]], sqrt(s_pf_h[HorseID_new[n]]^2 + s_pf_j[JockeyID_new[n]]^2) );
+    }
+    else if (Null_HorseID[n] == 1 && Null_JockeyID[n] == 0){
+      pf[n] = normal_rng( mu_h_null + mu_j[JockeyID_new[n]], sqrt(s_pf_h_null^2 + s_pf_j[JockeyID_new[n]]^2) );      
+    }
+    else if (Null_HorseID[n] == 0 && Null_JockeyID[n] == 1){
+      pf[n] = normal_rng( mu_h[HorseID_new[n]] + mu_j_null, sqrt(s_pf_h[HorseID_new[n]]^2 + s_pf_j_null^2) );
+    }
+    else if (Null_HorseID[n] == 1 && Null_JockeyID[n] == 1){
+      pf[n] = normal_rng( mu_h_null + mu_j_null, sqrt(s_pf_h_null^2 + s_pf_j_null^2) );
+    }
   }
 }
